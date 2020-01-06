@@ -34,7 +34,7 @@ namespace JsonParserPlugin
         }
         public void Reload(API rm)
         {
-            this.api = rm;
+            api = rm;
         }
 
         public string Parse(string source, string query)
@@ -59,13 +59,12 @@ namespace JsonParserPlugin
                         result = token.ToString(Formatting.None);
                     }
                 }
-
             }
             catch (JsonReaderException e)
             {
                 api.Log(API.LogType.Error, e.Message);
             }
-            api.Log(API.LogType.Debug, $"Query result string value: {result}");
+            api.Log(API.LogType.Debug, $"Result: {result}");
             return result;
         }
     }
