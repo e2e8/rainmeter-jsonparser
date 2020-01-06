@@ -2,18 +2,18 @@
 Json Parser Plugin for Rainmeter
 
 
-### Instal
-Drop JsonParser.dll into Rainmeter Plugins Folder
+### Install
+Download latest build https://github.com/e2e8/Rainmeter-JsonParser/releases
 
-Drop Newtonsoft.Json.dll into Rainmeter root Folder
+Drop JsonParser.dll into Rainmeter Plugins Folder
 
 ### Usage
 
 The plugin requires a Source and a Query
 
-**Soure:** valid json string
+**Source:** valid json string
 
-**Query:** path to json token. Details here https://www.newtonsoft.com/json/help/html/SelectToken.html
+**Query:** path to json token. Details here https://www.newtonsoft.com/json/help/html/SelectToken.htm
 
 Example:
 ```
