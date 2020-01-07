@@ -1,6 +1,7 @@
 # Rainmeter-JsonParser
 Json Parser Plugin for Rainmeter
 
+This plugin is a wrapper around Json.NET _LINQ to JSON_
 
 ### Install
 Download latest build https://github.com/e2e8/Rainmeter-JsonParser/releases
