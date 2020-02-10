@@ -19,7 +19,6 @@ The plugin requires a Source and a Query
 Queries can be JSONPath or json property names with dot and index notation
 
 - Dot and index notation:
-
     | | |
     | --- | --- |
     |dot notation | ```a.b``` |
@@ -47,7 +46,7 @@ Source=[Weather]
 Query="main.temp"
 ```
 
-#### Options
+### Options
 
 **Logging:** Set logging options. Syntax: _Option:Value,Option:Value..._
 
@@ -87,7 +86,7 @@ Locale="en-US"
 
 JsonParser provides command that can be used in section variables
 
-**Query:** Parse Json inline. Args: Source, Query
+**Query:** Parse Json inline. Arguments: _Query_ OR _Query, Source_ 
 
 Example:
 ```
@@ -97,10 +96,10 @@ Plugin=JsonParser.dll
 
 [Data]
 Meter=String
-Text=[MeasureJson:Query("{...}","query")]
+Text=[MeasureJson:Query(query,{...})]
 ```
 
-**Length:** Length of json array. Args: Source, Query
+**Length:** Length of json array. Arguments: _Query_ OR _Query, Source_
 
 Example:
 ```
@@ -110,5 +109,5 @@ Plugin=JsonParser.dll
 
 [Length]
 Measure=Calc
-Formula=[MeasureJson:Length("{...}","query")]
+Formula=[MeasureJson:Length(query,{...})]
 ```
