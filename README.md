@@ -111,3 +111,4 @@ Plugin=JsonParser.dll
 Measure=Calc
 Formula=[MeasureJson:Length(query,{...})]
 ```
+### Changes
