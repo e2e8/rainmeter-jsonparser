@@ -74,6 +74,12 @@
     <NoWarn>1607</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
+    <In>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)\AssemblyInfo.cs'))</In>
+    <Pattern>\[assembly: AssemblyVersion\("(?&lt;Major&gt;\d+)\.(?&lt;Minor&gt;\d+)\.</Pattern>
+    <AssemblyVersionMajor>$([System.Text.RegularExpressions.Regex]::Match($(In), $(Pattern), System.Text.RegularExpressions.RegexOptions.Multiline).Groups["Major"].Value)</AssemblyVersionMajor>
+    <AssemblyVersionMinor>$([System.Text.RegularExpressions.Regex]::Match($(In), $(Pattern), System.Text.RegularExpressions.RegexOptions.Multiline).Groups["Minor"].Value)</AssemblyVersionMinor>
+  </PropertyGroup>
+  <PropertyGroup>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
@@ -97,8 +103,16 @@
   </Target>
   -->
   <Target Name="AfterBuild">
-	<Exec Command="$(ILMergeConsolePath) /zeroPeKind /out:$(OutDir)JsonParser.dll $(OutDir)JsonParser.dll $(OutDir)Newtonsoft.Json.dll"/>
-	<Exec Command="$(SolutionDir)\API\DllExporter.exe $(ConfigurationName) $(PlatformName) $(TargetDir)\ $(TargetFileName)"/>
+    <CallTarget Targets="MergeJsonDll" />
+    <Exec Command="$(SolutionDir)\API\DllExporter.exe $(ConfigurationName) $(PlatformName) $(TargetDir)\ $(TargetFileName)" />
+    <CallTarget Targets="CreateReleaseZip" />
+  </Target>
+  <Target Name="MergeJsonDll" Condition="$(ConfigurationName) == 'Release'">
+    <Exec Command="$(ILMergeConsolePath) /zeroPeKind /out:$(OutDir)JsonParser.dll $(OutDir)JsonParser.dll $(OutDir)Newtonsoft.Json.dll" />
+  </Target>
+  <Target Name="CreateReleaseZip" Condition="$(ConfigurationName) == 'Release'">
+    <Zip Files="$(TargetPath)"  WorkingDirectory="$(TargetDir)" 
+		ZipFileName="$(SolutionDir)\Release\$(TargetName)-$(AssemblyVersionMajor).$(AssemblyVersionMinor)-$(PlatformName).zip"/>
   </Target>
   <PropertyGroup>
     <PostBuildEvent>
@@ -109,5 +123,7 @@
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\ILMerge.3.0.29\build\ILMerge.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\ILMerge.3.0.29\build\ILMerge.props'))" />
+    <Error Condition="!Exists('..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets'))" />
   </Target>
+  <Import Project="..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets" Condition="Exists('..\packages\MSBuildTasks.1.5.0.235\build\MSBuildTasks.targets')" />
 </Project>
