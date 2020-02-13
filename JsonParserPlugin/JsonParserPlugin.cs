@@ -11,6 +11,13 @@ namespace JsonParserPlugin
 {
     class Measure
     {
+        [Flags]
+        enum LoggingFlags
+        {
+            NoMatch = 1,
+            EmptySource = 2
+        }
+
         public API api;
 
         public string source = "";
@@ -29,6 +36,8 @@ namespace JsonParserPlugin
         public Measure(API api)
         {
             this.api = api;
+            ConfigureLogging(api.ReadString("Logging", ""));
+            ConfigureLocale(api.ReadString("Locale", ""));
         }
 
         static public implicit operator Measure(IntPtr data)
@@ -43,11 +52,6 @@ namespace JsonParserPlugin
 
         public void Reload(API api, double maxValue)
         {
-            this.api = api;
-            ConfigureLogging(api.ReadString("Logging", ""));
-
-            ConfigureLocale(api.ReadString("Locale", ""));
-
             source = api.ReadString("Source", "");
             query = api.ReadString("Query", "");
 
@@ -135,23 +139,39 @@ namespace JsonParserPlugin
 
             if (!string.IsNullOrEmpty(loggingConf))
             {
-                var configs = loggingConf.Split(',');
-                foreach (var config in configs)
+                if (int.TryParse(loggingConf, out int loggingValue))
                 {
-                    var temp = config.Trim().ToLower();
-                    var parts = temp.Split(':');
-                    if (parts.Length == 2 && (parts[1].Equals("0") || parts[1].Equals("1")))
+                    api.Log(API.LogType.Debug, $"Log Config: interpreting as Compact Form");
+                    if ((LoggingFlags.EmptySource & (LoggingFlags)loggingValue) == LoggingFlags.EmptySource)
                     {
-                        switch (parts[0])
-                        {
-                            case "nomatch": logNoMatch = parts[1].Equals("1") ? true : false; break;
-                            case "emptysource": logEmptySource = parts[1].Equals("1") ? true : false; break;
-                            default: api.Log(API.LogType.Debug, $"Log Config: Invalid Option: {parts[0]}"); break;
-                        }
+                        logEmptySource = true;
                     }
-                    else
+                    if ((LoggingFlags.NoMatch & (LoggingFlags)loggingValue) == LoggingFlags.NoMatch)
                     {
-                        api.Log(API.LogType.Debug, $"Log Config: Invalid Config: {config}");
+                        logNoMatch = true;
+                    }
+                }
+                else
+                {
+                    api.Log(API.LogType.Debug, $"Log Config: interpreting as Long Form");
+                    var configs = loggingConf.Split(',');
+                    foreach (var config in configs)
+                    {
+                        var temp = config.Trim().ToLower();
+                        var parts = temp.Split(':');
+                        if (parts.Length == 2 && (parts[1].Equals("0") || parts[1].Equals("1")))
+                        {
+                            switch (parts[0])
+                            {
+                                case "nomatch": logNoMatch = parts[1].Equals("1") ? true : false; break;
+                                case "emptysource": logEmptySource = parts[1].Equals("1") ? true : false; break;
+                                default: api.Log(API.LogType.Debug, $"Log Config: Invalid Option: {parts[0]}"); break;
+                            }
+                        }
+                        else
+                        {
+                            api.Log(API.LogType.Debug, $"Log Config: Invalid Config: {config}");
+                        }
                     }
                 }
             }

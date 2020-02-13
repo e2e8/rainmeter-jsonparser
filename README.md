@@ -48,12 +48,12 @@ Query="main.temp"
 
 ### Options
 
-**Logging:** Set logging options. Syntax: _Option:Value,Option:Value..._
+**Logging:** Set logging options. The options can be specified using a long form (_Option:Value,Option:Value..._) or a compact form (_Integer_) where integer is the value of the bitfield.
 
-| Options | |
-| --- | --- |
-| NoMatch | Log Warning when no match for query found   |
-| EmptySource | Log Error when source is empty          |
+| Options | | Bit Number |
+| --- | --- | --- |
+| NoMatch | Log Warning when no match for query found   | 1 |
+| EmptySource | Log Error when source is empty          | 2 |
 
 | Values |     |
 | ------ | --- |
@@ -68,6 +68,8 @@ Plugin=JsonParser.dll
 Source=...
 Query=...
 Logging=NoMatch:0,EmptySource:0
+OR
+Logging=0
 ```
 
 **Locale:** Set locale value. This defines certain region specific format such as decimal seperator. Defaults to InvariantCulture (empty string) which is basically English/American formating. More here: https://docs.microsoft.com/en-us/dotnet/api/system.globalization.cultureinfo
