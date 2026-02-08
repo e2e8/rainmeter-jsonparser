@@ -1,8 +1,10 @@
 ﻿using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Rainmeter;
@@ -33,11 +35,30 @@ namespace JsonParserPlugin
 
         private string locale = "";
 
+        private string nullString = "null";
+        private string trueString = "true";
+        private string falseString = "false";
+
+        private string joinString = ", ";
+
+        private bool numberRawMode = true;
+
         public Measure(API api)
         {
             this.api = api;
             ConfigureLogging(api.ReadString("Logging", ""));
             ConfigureLocale(api.ReadString("Locale", ""));
+
+            nullString = api.ReadString("NullString", "null");
+            trueString = api.ReadString("TrueString", "true");
+            falseString = api.ReadString("FalseString", "false");
+            joinString = api.ReadString("joinString", ", ");
+
+            if (api.ReadString("numberMode", "raw") == "raw")
+            {
+                numberRawMode = true;
+            }
+
         }
 
         static public implicit operator Measure(IntPtr data)
@@ -62,23 +83,94 @@ namespace JsonParserPlugin
             numeric = double.TryParse(result, out double numericResult) ? numericResult : 0.0;
         }
 
-        public delegate string ResultFunc(JToken x);
+        public delegate string ResultFunc(List<JToken> x);
 
-        public string StringResult(JToken token)
+        public string StringResult(List<JToken> tokens)
         {
+            if (tokens.Count == 1)
+            {
+                return JTokenToString(tokens[0]);
+            }
+            else
+            {
+                var result = new StringBuilder();
+                var i = 0;
+                foreach (var token in tokens)
+                {
+                    i++;
+                    result.Append(JTokenToString(token));
+                    if (i != tokens.Count)
+                    {
+                        result.Append(joinString);
+                    }
+                }
+                return result.ToString();
+            }
+        }
+
+        public string JTokenToString(JToken token)
+        {
+
             if (token is JValue value)
             {
+                if (value.Type == JTokenType.Null)
+                {
+                    return nullString;
+                }
+                if (value.Type == JTokenType.Boolean && (bool)value.Value == true)
+                {
+                    return trueString;
+                }
+                if (value.Type == JTokenType.Boolean && (bool)value.Value == false)
+                {
+                    return falseString;
+                }
+                if (value.Type == JTokenType.String)
+                {
+                    return value.ToString(new CultureInfo(locale));
+                }
+                if (value.Type == JTokenType.Integer)
+                {
+                    if (numberRawMode)
+                    {
+                        return value.RawString;
+                    }
+                    else
+                    {
+                        return value.ToString(new CultureInfo(locale));
+                    }
+                }
+                if (value.Type == JTokenType.Float)
+                {
+                    if (numberRawMode)
+                    {
+                        return value.RawString;
+                    }
+                    else
+                    {
+                        return value.ToString(new CultureInfo(locale));
+                    }
+                }
+                //var serializer = JsonSerializer.CreateDefault();
+                //serializer.FloatParseHandling = Handling.
+                //var sb = new StringBuilder();
+                //var writer = new JsonTextWriter(new StringWriter(sb));
+                //serializer.Serialize(writer, value);
+                //writer.Close();
+                //return sb.ToString();
                 return value.ToString(new CultureInfo(locale));
             }
             else
             {
                 return token.ToString(Formatting.None);
             }
+
         }
 
-        public string LengthResult(JToken token)
+        public string LengthResult(List<JToken> tokens)
         {
-            if (token is JArray)
+
+            if (tokens[0] is JArray token)
             {
                 return ((JArray)token).Count.ToString();
             }
@@ -87,6 +179,11 @@ namespace JsonParserPlugin
                 api.Log(API.LogType.Debug, "Length: not an Array");
                 return "1";
             }
+        }
+
+        public string LengthXResult(List<JToken> tokens)
+        {
+            return tokens.Count.ToString();
         }
 
         public string Parse(string source, string query)
@@ -105,8 +202,9 @@ namespace JsonParserPlugin
                 };
                 var json = JToken.Load(jsonReader);
 
-                var token = json.SelectToken(query);
-                if (token == null)
+                var tokens = json.SelectTokens(query);
+
+                if (tokens == null)
                 {
                     if (logNoMatch)
                     {
@@ -115,7 +213,7 @@ namespace JsonParserPlugin
                 }
                 else
                 {
-                    result = f(token);
+                    result = f(toList(tokens));
                 }
             }
             catch (JsonReaderException e)
@@ -131,6 +229,17 @@ namespace JsonParserPlugin
             }
             api.Log(API.LogType.Debug, $"Result: {result}");
             return result;
+        }
+
+        private static List<TSource> toList<TSource>(IEnumerable<TSource> source)
+        {
+            List<TSource> list = new List<TSource>();
+
+            foreach (var item in source)
+            {
+                list.Add(item);
+            }
+            return list;
         }
 
         private void ConfigureLogging(string loggingConf)
